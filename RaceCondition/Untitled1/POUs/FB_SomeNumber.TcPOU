@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SomeNumber" Id="{b389858d-0bd9-4a13-848a-980398a3b7c0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SomeNumber
+
+VAR_INPUT
+	
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+
+VAR
+	nTheNumberInQuestion : ST_DataStuff;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="mRecordData" Id="{4b6172bd-1424-4ca2-95ad-7faa81a09922}">
+      <Declaration><![CDATA[METHOD mRecordData : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="mRunnerOne" Id="{cce0b08b-b3a7-43d2-b62b-8c8c7f3b662a}">
+      <Declaration><![CDATA[METHOD mRunnerOne : BOOL
+
+VAR_INPUT
+	stInputData : ST_DataStuff;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Do some calculations here, this output should differ from the other runner to track which is doing what
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SomeNumber">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SomeNumber.mRecordData">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SomeNumber.mRunnerOne">
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

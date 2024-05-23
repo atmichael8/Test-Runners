@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_DataStuff" Id="{5de43432-b6a0-4bfd-a085-0227690ebfb9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DataStuff
+
+VAR
+	a2dArray : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	pPointer : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(a2dArray);
+	
+	// The value that will be pointed to and calculated amongst the runners
+	nValueToCalculate : UINT := 100;
+	pPointerToValue : POINTER TO UINT := ADR(nValueToCalculate);
+	
+	// This will keep track of the index in which the mStoreData method will place data in
+	nIndexCounter : UINT := 0;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Pass the pointer to the runner function so it has the direct address of the 2dArray
+IF nIndexCounter <> 1000 THEN
+		nIndexCounter := nIndexCounter + 1;
+	
+	mRunnerOne(pDataTable := pPointer^, 
+			   nIndexLocation := nIndexCounter,
+			   nRunnerValue := pPointerToValue^);
+			   
+	nIndexCounter := nIndexCounter + 1;
+	
+	mRunnerOne(pDataTable := pPointer^, 
+			   nIndexLocation := nIndexCounter,
+			   nRunnerValue := pPointerToValue^);
+END_IF
+
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="mRunnerOne" Id="{4c35da92-dbaa-462a-b449-f72ec02b6747}">
+      <Declaration><![CDATA[METHOD mRunnerOne : BOOL
+
+VAR_INPUT
+	pDataTable : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	
+	nIndexLocation : UINT;
+	nRunnerValue : UINT;
+END_VAR
+
+VAR
+	nThisRunner : UINT := 1;
+	pPointer : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(pDataTable);
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[nRunnerValue := nRunnerValue + 1;
+
+mStoreData(pDataTableOp := pPointer^,
+		   nIndexToStoreIn := nIndexLocation, 
+		   nValue := nRunnerValue, 
+		   nRunnerNumber := nThisRunner);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="mRunnerTwo" Id="{017cb03a-c4b4-4fa7-be8a-82cf29a99e89}">
+      <Declaration><![CDATA[METHOD mRunnerTwo : BOOL
+
+VAR_INPUT
+	pDataTable : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	
+	nIndexLocation : UINT;
+	nRunnerValue : UINT;
+END_VAR
+
+VAR
+	nThisRunner : UINT := 2;
+	pPointer : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(pDataTable);
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[nRunnerValue := nRunnerValue - 1;
+
+mStoreData(pDataTableOp := pPointer^,
+		   nIndexToStoreIn := nIndexLocation, 
+		   nValue := nRunnerValue, 
+		   nRunnerNumber := nThisRunner);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="mStoreData" Id="{7643b4a4-143b-4065-9533-062b0b195bbd}">
+      <Declaration><![CDATA[METHOD mStoreData : BOOL
+
+VAR_INPUT
+	pDataTableOp : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	nIndexToStoreIn : UINT;
+	nValue : UINT;
+	nRunnerNumber : UINT;
+END_VAR
+
+VAR
+	sCurrentStringA : STRING;
+	sCurrentStringB : STRING;
+	pPointerData : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(pDataTableOp);
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// STORES THE CURRENT DATA IN THE ARRAY
+sCurrentStringA := UINT_TO_STRING(nValue);
+sCurrentStringB := UINT_TO_STRING(nRunnerNumber);
+
+pPointerData^[nIndexToStoreIn][1] := sCurrentStringA;
+pPointerData^[nIndexToStoreIn][2] := sCurrentStringB;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_DataStuff">
+      <LineId Id="15" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="48" Count="9" />
+      <LineId Id="46" Count="1" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="31" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_DataStuff.mRunnerOne">
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_DataStuff.mRunnerTwo">
+      <LineId Id="17" Count="4" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_DataStuff.mStoreData">
+      <LineId Id="5" Count="0" />
+      <LineId Id="17" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
