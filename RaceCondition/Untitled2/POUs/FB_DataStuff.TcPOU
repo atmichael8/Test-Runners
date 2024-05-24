@@ -4,32 +4,38 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DataStuff
 
 VAR
+	// The array of data for each instance of FB_DataStuff
 	a2dArray : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
-	pPointer : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(a2dArray);
 	
-	// The value that will be pointed to and calculated amongst the runners
+	// The value that will be referenced to and calculated amongst the runners
 	nValueToCalculate : UINT := 100;
-	pPointerToValue : POINTER TO UINT := ADR(nValueToCalculate);
 	
 	// This will keep track of the index in which the mStoreData method will place data in
 	nIndexCounter : UINT := 0;
-	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Pass the pointer to the runner function so it has the direct address of the 2dArray
-IF nIndexCounter <> 1000 THEN
-		nIndexCounter := nIndexCounter + 1;
-	
-	mRunnerOne(pDataTable := pPointer^, 
-			   nIndexLocation := nIndexCounter,
-			   nRunnerValue := pPointerToValue^);
-			   
+      <ST><![CDATA[// Check if nIndexCounter is below the size of the objects array
+IF nIndexCounter < 1000 THEN
+	// Increment nIndexCounter by 1, to place in the next index of objects array
 	nIndexCounter := nIndexCounter + 1;
 	
-	mRunnerOne(pDataTable := pPointer^, 
-			   nIndexLocation := nIndexCounter,
-			   nRunnerValue := pPointerToValue^);
+	// Call mRunnerOne method
+	mRunnerOne(pDataTable := a2dArray, // Send it the objects array
+			   nIndexLocation := nIndexCounter, // Send the current index to be placed in
+			   nRunnerValue := nValueToCalculate); // Send the objects nRunnerValue to calculate
+	// ^^ Inside the method, it will create the references to the original array of the object
+	//		rather than just creating a copy of it
+			
+	// Increment nIndexCounter by 1, to place in the next index of objects array   
+	nIndexCounter := nIndexCounter + 1;
+	
+	// Call mRunnerOne method
+	mRunnerTwo(pDataTable := a2dArray,  // Send it the objects array 
+			   nIndexLocation := nIndexCounter,// Send the current index to be placed in
+			   nRunnerValue := nValueToCalculate); // Send the objects nRunnerValue to calculate
+	// ^^ Inside the method, it will create the references to the original array of the object
+	//		rather than just creating a copy of it
 END_IF
 
 
@@ -40,104 +46,209 @@ END_IF
       <Declaration><![CDATA[METHOD mRunnerOne : BOOL
 
 VAR_INPUT
-	pDataTable : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	// Create an array that references the objects array 
+	pDataTable : REFERENCE TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
 	
+	// This was sent, and will be forwarded to the following save function
 	nIndexLocation : UINT;
-	nRunnerValue : UINT;
+	
+	// Create a reference UINT of the objects value to calculate
+	//    this way, both can edit the original variable at the same time
+	nRunnerValue : REFERENCE TO UINT;
 END_VAR
 
 VAR
+	// Local variable to send to the following save function, to ID that this is the sender
 	nThisRunner : UINT := 1;
-	pPointer : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(pDataTable);
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[nRunnerValue := nRunnerValue + 1;
+        <ST><![CDATA[// Make the calculation that this runner is responsible for, 
+//    and set it directly to the objects nValueToCalculate
+nRunnerValue := nRunnerValue + 1;
 
-mStoreData(pDataTableOp := pPointer^,
-		   nIndexToStoreIn := nIndexLocation, 
-		   nValue := nRunnerValue, 
+// Call the mStoreData method to store the current entry that this runner calculated
+//   after the subsequent nRunnerValue updated the objects nValueToCalculate data
+//   this could mean that the data being stored could be old if the other runner 
+//   updates the reference value
+mStoreData(pDataTableOp := pDataTable, // Send the method the referenced table, which it will reference too
+		   nIndexToStoreIn := nIndexLocation, // Send the index passed from the FB for tracking purposes
+		   nValue := nRunnerValue, // Send it the referenced nRunnerValue  NOTE A*
 		   nRunnerNumber := nThisRunner);
-]]></ST>
+		   
+// NOTE A: It is noteworthy that it is sending the referenced value of the nRunnerValue
+//   instead of the result that the runner came to inside this method. 
+//   That means that if the referenced nRunnerValue was changed by another runner between
+//   the time that this runner calculated, and then stored; the mStoreData function would
+//   then receive the most up to data value (from the other runner that was able to save
+//   before this could call the save), rather than the value that this runner calculated.
+//   - If the value of what this runner calculated was desired instead, then passing it
+//   by value would be a better alternative. Which would be done by creating a local variable
+//   and setting the calculation equal to that, and sending that value to the mStoreData. 
+//   - Thus having multiple runners making calculations and updating the variable directly 
+//   by reference has risks and race conditions if there was a slight delay with a runner
+//   leading to their calculations and stores out of sync. ]]></ST>
       </Implementation>
     </Method>
     <Method Name="mRunnerTwo" Id="{017cb03a-c4b4-4fa7-be8a-82cf29a99e89}">
       <Declaration><![CDATA[METHOD mRunnerTwo : BOOL
 
 VAR_INPUT
-	pDataTable : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	// Create an array that references the objects array 
+	pDataTable : REFERENCE TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
 	
+	// This was sent, and will be forwarded to the following save function
 	nIndexLocation : UINT;
-	nRunnerValue : UINT;
+	
+	// Create a reference UINT of the objects value to calculate
+	//    this way, both can edit the original variable at the same time
+	nRunnerValue : REFERENCE TO UINT;
 END_VAR
 
 VAR
+	// Local variable to send to the following save function, to ID that this is the sender
 	nThisRunner : UINT := 2;
-	pPointer : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(pDataTable);
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[nRunnerValue := nRunnerValue - 1;
+        <ST><![CDATA[// Make the calculation that this runner is responsible for, 
+//    and set it directly to the objects nValueToCalculate
+nRunnerValue := nRunnerValue - 1;
 
-mStoreData(pDataTableOp := pPointer^,
-		   nIndexToStoreIn := nIndexLocation, 
-		   nValue := nRunnerValue, 
-		   nRunnerNumber := nThisRunner);]]></ST>
+// Call the mStoreData method to store the current entry that this runner calculated
+//   after the subsequent nRunnerValue updated the objects nValueToCalculate data
+//   this could mean that the data being stored could be old if the other runner 
+//   updates the reference value
+mStoreData(pDataTableOp := pDataTable, // Send the method the referenced table, which it will reference too
+		   nIndexToStoreIn := nIndexLocation, // Send the index passed from the FB for tracking purposes
+		   nValue := nRunnerValue, // Send it the referenced nRunnerValue  NOTE A*
+		   nRunnerNumber := nThisRunner);
+		   
+// NOTE A: It is noteworthy that it is sending the referenced value of the nRunnerValue
+//   instead of the result that the runner came to inside this method. 
+//   That means that if the referenced nRunnerValue was changed by another runner between
+//   the time that this runner calculated, and then stored; the mStoreData function would
+//   then receive the most up to data value (from the other runner that was able to save
+//   before this could call the save), rather than the value that this runner calculated.
+//   - If the value of what this runner calculated was desired instead, then passing it
+//   by value would be a better alternative. Which would be done by creating a local variable
+//   and setting the calculation equal to that, and sending that value to the mStoreData. 
+//   - Thus having multiple runners making calculations and updating the variable directly 
+//   by reference has risks and race conditions if there was a slight delay with a runner
+//   leading to their calculations and stores out of sync. ]]></ST>
       </Implementation>
     </Method>
     <Method Name="mStoreData" Id="{7643b4a4-143b-4065-9533-062b0b195bbd}">
       <Declaration><![CDATA[METHOD mStoreData : BOOL
 
 VAR_INPUT
-	pDataTableOp : ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	// Create the final reference to the original array in the object
+	pDataTableOp : REFERENCE TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING;
+	
+	// Receive the index to store, passed down from FB_DataStuff -> mRunner(number) -> here
 	nIndexToStoreIn : UINT;
-	nValue : UINT;
+	
+	// Receive the nValue from the latest reference to the nValueToCalculate from FB_DataStuff
+	//  the reference chain is FB_DataStuff -> mRunner(number) 
+	//  Note that the reference chain doesn't go to -> here, see NOTE A in mRunnerOne or mRunnerTwo
+	nValue : UINT; 
+	
+	// Variable passed by the mRunner(number) that is calling, to ID the caller in the array
 	nRunnerNumber : UINT;
 END_VAR
 
 VAR
+	// Strings that will convert the incoming UINTs into STRINGS to be stored in array : STRING
 	sCurrentStringA : STRING;
 	sCurrentStringB : STRING;
-	pPointerData : POINTER TO ARRAY[1..1000] OF ARRAY[1..3] OF STRING := ADR(pDataTableOp);
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// STORES THE CURRENT DATA IN THE ARRAY
+        <ST><![CDATA[// Convert the input values from the caller to STRING to be stored into array
 sCurrentStringA := UINT_TO_STRING(nValue);
 sCurrentStringB := UINT_TO_STRING(nRunnerNumber);
 
-pPointerData^[nIndexToStoreIn][1] := sCurrentStringA;
-pPointerData^[nIndexToStoreIn][2] := sCurrentStringB;]]></ST>
+// pDataTable is referenced from FB_DataStuff -> mRunner(number) -> here
+// This is so the array in the function block is updated directly from this function
+pDataTableOp[nIndexToStoreIn][1] := sCurrentStringA;
+pDataTableOp[nIndexToStoreIn][2] := sCurrentStringB;
+
+// NOTE B: Although the scope of this exercise allows for just calling the array directly in 
+//   the FB_DataStuff since it is an instance of an object and that data is linked to the instance
+//   this is still relevant when passing to data to other Function Blocks (Classes), Methods, or
+//   Functions outside the scope of this Function Block. It also demonstrates that you can 
+//   chain a reference through multiple functions so that the lowest level method can still 
+//   make a direct change to the highest level scope of the program, or in a scope that is 
+//   within other FB's, Methods, or Functions.
+//   - This is useful for data types that are massive in size, which would lead to passing
+//   by value taking longer to copy the data over to another local variable; this is not
+//   only time consuming, but it is also memory consuming as passing by value essentially 
+//   doubles the amount of memory being allocated for the same data type. So in the interest
+//   of saving time and space, it could benefit to pass by reference rather than value.
+//   - The risks associated with this is race conditions, where two methods are working on 
+//   the same data and may interupt eachothers results by changing the original value, 
+//   leading to unexpected outcomes for data results. So caution should be exercised when
+//   having multiple methods editing the same referenced value in separate places, especially
+//   in TwinCAT where they can run parallel. 
+//   - The secondary risk associated with it is that, since the method is directly affecting
+//   the original copy of the data, if an error occurs and say it overwrites the data for a log,
+//   then the original copy of the data is overwritten and thus lost. So the two scenarios
+//   of preserving time and space, plus protecting the original copy of that data are to be 
+//   considered when working with references. The same applies to pointers.
+
+
+]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_DataStuff">
       <LineId Id="15" Count="0" />
       <LineId Id="45" Count="0" />
-      <LineId Id="48" Count="9" />
-      <LineId Id="46" Count="1" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="50" Count="2" />
+      <LineId Id="77" Count="1" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="47" Count="0" />
       <LineId Id="39" Count="0" />
       <LineId Id="42" Count="0" />
       <LineId Id="32" Count="0" />
       <LineId Id="31" Count="0" />
     </LineIds>
     <LineIds Name="FB_DataStuff.mRunnerOne">
+      <LineId Id="49" Count="1" />
       <LineId Id="5" Count="0" />
+      <LineId Id="51" Count="0" />
       <LineId Id="11" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="15" Count="1" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="25" Count="2" />
       <LineId Id="12" Count="0" />
+      <LineId Id="55" Count="12" />
     </LineIds>
     <LineIds Name="FB_DataStuff.mRunnerTwo">
-      <LineId Id="17" Count="4" />
+      <LineId Id="37" Count="23" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_DataStuff.mStoreData">
       <LineId Id="5" Count="0" />
       <LineId Id="17" Count="1" />
-      <LineId Id="26" Count="0" />
-      <LineId Id="25" Count="0" />
+      <LineId Id="61" Count="0" />
       <LineId Id="29" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="65" Count="17" />
+      <LineId Id="84" Count="2" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="32" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

@@ -4,14 +4,29 @@
     <Declaration><![CDATA[PROGRAM MAIN
 
 VAR
-	fb_HahaDataStuff : FB_DataStuff;
+	fb_ObjectOne : FB_DataStuff;
+	
+	fb_ObjectTwo : FB_DataStuff;
 END_VAR
+
+// This uses pass by reference (it is not necessary within a FB)
+//   but the implementations could be used in other applications
+//   read notes in the other files to see more details.
+
+// Time delays are not implemented in this version
+//   so race conditions are not present, and this would be the
+//   most ideal situation in terms of multiple functions
+//   using the same referenced variable. 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[fb_HahaDataStuff();]]></ST>
+      <ST><![CDATA[fb_ObjectOne();
+
+fb_ObjectTwo();]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
       <LineId Id="2" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="20" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
