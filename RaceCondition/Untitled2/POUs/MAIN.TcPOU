@@ -4,29 +4,26 @@
     <Declaration><![CDATA[PROGRAM MAIN
 
 VAR
-	fb_ObjectOne : FB_DataStuff;
-	
-	fb_ObjectTwo : FB_DataStuff;
+	fb_HahaDataStuff : FB_DataStuff;
 END_VAR
-
-// This uses pass by reference (it is not necessary within a FB)
-//   but the implementations could be used in other applications
-//   read notes in the other files to see more details.
-
-// Time delays are not implemented in this version
-//   so race conditions are not present, and this would be the
-//   most ideal situation in terms of multiple functions
-//   using the same referenced variable. 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[fb_ObjectOne();
+      <ST><![CDATA[fb_HahaDataStuff();
 
-fb_ObjectTwo();]]></ST>
+// This is the pointer implementation of the runners 
+
+// Does not implement delays so there isn't really race conditions, but 
+// is a good demonstration of using pointers 
+// Although pointers are unecessary in this scenario, the general
+// basis can be applied to other scenarios]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
-      <LineId Id="2" Count="0" />
-      <LineId Id="21" Count="0" />
       <LineId Id="20" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="39" Count="2" />
     </LineIds>
   </POU>
 </TcPlcObject>
